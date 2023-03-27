@@ -1,0 +1,362 @@
+module ietf-netconf-otlp-protocol {
+  namespace "urn:ietf:params:xml:ns:yang:tbdtraces";
+  prefix ietf-netconf-otlpc;
+
+  organization
+     "IETF NETCONF (Network Configuration) Working Group";
+
+  contact
+    "WG Web:   <http://tools.ietf.org/wg/netconf/>
+    WG List:  <mailto:netconf@ietf.org>";
+  
+  description
+    "This is a yang description of the OpenTelemetry Tracing protocol
+    protobufer described here:
+    https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/trace/v1/trace.proto
+    
+    Using the protobuffer to YANG transformation in:
+    https://github.com/openconfig/ygot/blob/master/docs/yang-to-protobuf-transformations-spec.md
+
+    This module can be used to store OpenTelemetry traces content in
+    YANG-based datastores or to transmit OpenTelemetry traces 
+    using YANG-based wire protocols such as NETCONF or RESTCONF.
+
+    Copyright (c) 2022 IETF Trust and the persons identified as
+    authors of the code.  All rights reserved.
+
+    Redistribution and use in source and binary forms, with or
+    without modification, is permitted pursuant to, and subject to
+    the license terms contained in, the Simplified BSD License set
+    forth in Section 4.c of the IETF Trust's Legal Provisions
+    Relating to IETF Documents
+    (https://trustee.ietf.org/license-info).
+
+    This version of this YANG module is part of RFC XXXX
+    (https://www.rfc-editor.org/info/rfcXXXX); see the RFC itself
+    for full legal notices.
+
+    The key words 'MUST', 'MUST NOT', 'REQUIRED', 'SHALL', 'SHALL
+    NOT', 'SHOULD', 'SHOULD NOT', 'RECOMMENDED', 'NOT RECOMMENDED',
+    'MAY', and 'OPTIONAL' in this document are to be interpreted as
+    described in BCP 14 (RFC 2119) (RFC 8174) when, and only when,
+    they appear in all capitals, as shown here.
+    ";
+  
+  revision 2022-08-26 {
+    description 
+      "Initial revision";
+    reference
+      "RFC XXX";
+  }
+
+  typedef statuscode-type {
+    // probably needs to change to identity-ref
+    description "
+      For the semantics of status codes see
+      https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status";
+    type enumeration {
+      enum STATUS_CODE_UNSET{
+        description "The default status";
+      }
+      enum STATUS_CODE_OK {
+        description "The Span has been validated by an Application developer or Operator to have completed successfully";
+      }
+      enum STATUS_CODE_ERROR {
+        description "The Span contains an error.";
+      }
+    }
+  }
+
+  typedef spankind-type {
+    // probably needs to change to identity-ref
+    description "SpanKind is the type of span. Can be used to specify additional relationships between spans
+    in addition to a parent/child relationship";
+    type enumeration {
+      enum SPAN_KIND_UNSPECIFIED {
+        description "Unspecified. Do NOT use as default.
+        Implementations MAY assume SpanKind to be INTERNAL when receiving UNSPECIFIED";
+      }
+      enum SPAN_KIND_INTERNAL {
+        description "Indicates that the span represents an internal operation within an application,
+        as opposed to an operation happening at the boundaries. Default value.";
+      }
+      enum SPAN_KIND_SERVER {
+        description "Indicates that the span covers server-side handling of an RPC or other remote network request";
+      }
+      enum SPAN_KIND_CLIENT {
+        description "Indicates that the span describes a request to some remote service";
+      }
+      enum SPAN_KIND_PRODUCER {
+        description "Indicates that the span describes a producer sending a message to a broker";
+      }
+      enum SPAN_KIND_CONSUMER {
+        description "Indicates that the span describes consumer receiving a message from a broker.";
+      }
+    }
+    default SPAN_KIND_INTERNAL;
+  }
+  grouping span-grouping {
+    leaf trace_id {
+      description "A unique identifier for a trace. All spans from the same trace share
+  the same `trace_id`. The ID is a 16-byte array. An ID with all zeroes
+  is considered invalid.
+  This field is semantically required. Receiver should generate new
+  random trace_id if empty or invalid trace_id was received.
+  This field is required.";
+      type binary;
+    }
+    leaf span_id {
+      description "trace_state conveys information about request position in multiple distributed tracing graphs.
+  It is a trace_state in w3c-trace-context format: https://www.w3.org/TR/trace-context/#tracestate-header
+  See also https://github.com/w3c/distributed-tracing for more details about this field.";
+      type binary;
+    }
+    leaf trace_state {
+      description "trace_state conveys information about request position in multiple distributed tracing graphs.
+  It is a trace_state in w3c-trace-context format: https://www.w3.org/TR/trace-context/#tracestate-header
+  See also https://github.com/w3c/distributed-tracing for more details about this field.";
+      type string;
+    }
+    leaf parent_span_id {
+      description "The span_id of this span's parent span. If this is a root span, then this
+        field must be empty. The ID is an 8-byte array";
+      type binary;
+    }
+    leaf name {
+      description "A description of the span's operation";
+      mandatory true;
+      type string;
+    }
+    leaf kind {
+      description "Distinguishes between spans generated in a particular context. For example,
+    two spans with the same name may be distinguished using `CLIENT` (caller)
+    and `SERVER` (callee) to identify queueing latency associated with the span";
+      type spankind-type;
+    }
+    leaf start_time_unix_nano {
+      description "start_time_unix_nano is the start time of the span. On the client side, this is the time
+      kept by the local machine where the span execution starts. On the server side, this
+      is the time when the server's application handler starts running.
+      Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970
+      This field is semantically required and it is expected that end_time >= start_time.";
+      type uint64;
+      mandatory true;
+    }
+    leaf end_time_unix_nano {
+      description "end_time_unix_nano is the end time of the span.On the client side, this is the time
+      kept by the local machine where the span execution ends. On the server side, this
+      is the time when the server application handler stops running.
+      Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.
+      This field is semantically required and it is expected that end_time >= start_time.";
+      type uint64;
+      mandatory true;
+      must "current() >= ../start_time_unix_nano";
+    }
+
+    list attributes {
+      key key;
+      uses key-values-grouping;
+    }
+
+    leaf dropped_attributes_count {
+      type uint32;
+    }
+
+    list events {
+      key name;
+
+      leaf time_unix_nano {
+        type uint64;
+      }
+      leaf name {
+        type string;
+      }
+      list attributes {
+        key key;
+        uses key-values-grouping;       
+      }
+      leaf dropped_attributes_count {
+        type uint32;
+      }
+    }
+    leaf dropped_events_count {
+      type uint32;
+    }
+
+    list links {
+      key "trace_id span_id";
+      leaf trace_id {
+        description "A unique identifier for a trace. All spans from the same trace share
+    the same `trace_id`. The ID is a 16-byte array. An ID with all zeroes
+    is considered invalid.
+    This field is semantically required. Receiver should generate new
+    random trace_id if empty or invalid trace_id was received.
+    This field is required.";
+        type binary;
+      }
+      leaf span_id {
+        description "trace_state conveys information about request position in multiple distributed tracing graphs.
+    It is a trace_state in w3c-trace-context format: https://www.w3.org/TR/trace-context/#tracestate-header
+    See also https://github.com/w3c/distributed-tracing for more details about this field.";
+        type binary;
+      }
+      leaf trace_state {
+        description "trace_state conveys information about request position in multiple distributed tracing graphs.
+    It is a trace_state in w3c-trace-context format: https://www.w3.org/TR/trace-context/#tracestate-header
+    See also https://github.com/w3c/distributed-tracing for more details about this field.";
+        type string;
+      }
+      list attributes {
+        key key;
+        uses key-values-grouping;
+      }
+
+      leaf dropped_attributes_count {
+        type uint32;
+      }
+    }
+    leaf dropped_links_count {
+      type uint32;
+    }
+
+    container status {
+      leaf message {
+        description "A developer-facing human readable error message.";
+        type string;
+      }
+      leaf code {
+        description "The status code.";
+        type statuscode-type;
+      }
+    }
+  }
+  grouping array_value_grouping {
+    // I need to re-check how to create a leaf-list of a choise....
+    leaf-list value {
+      type string;
+    }
+  }
+
+  grouping any-value-grouping {
+    choice value-choice {
+      case case-string_value {
+        leaf string_value {
+          type string;
+        }
+      }
+      case case-bool_value {
+        leaf bool_value {
+          type boolean;
+        }
+      }
+      case case-int_value {
+        leaf int_value {
+          type int64;
+        }
+      }
+      case double_value {
+        leaf double_value {
+          type string;
+        }
+      }
+      case array_value {
+        uses array_value_grouping;
+      }
+    }
+  }
+
+  grouping key-values-grouping  {
+    description "KeyValue is a key-value pair that is used to store Span attributes, Link, etc";
+    leaf key {
+      type string;
+    }
+    uses any-value-grouping;
+  }
+  grouping resource-grouping {
+    list attributes {
+      description "Set of attributes that describe the resource";
+      key key;
+      uses key-values-grouping;
+    }
+    leaf dropped_attributes_count {
+      type uint32;
+    }
+  }
+
+  grouping instrumentation-scope-grouping {
+    leaf name {
+      description "An empty instrumentation scope name means the name is unknown.";
+      type string;
+    }
+    leaf version {
+      type string;
+    }
+    list attributes {
+      key key;
+      uses key-values-grouping;
+    }
+    leaf dropped_attributes_count {
+      type uint32;
+    }
+  }
+
+  grouping scope-spans-grouping {
+    container scope {
+      description "The instrumentation scope information for the spans in this message.
+      Semantically when InstrumentationScope isn't set, it is equivalent with
+      an empty instrumentation scope name (unknown).";
+
+      uses instrumentation-scope-grouping;
+
+    }
+
+    list spans {
+      description "A list of Spans that originate from an instrumentation scope.";
+
+      key "trace_id span_id";
+    
+      uses span-grouping;
+    }
+
+    leaf schema_url {
+      description "This schema_url applies to all spans and span events in the spans field";
+      type string;
+    }
+  }
+
+  container TracesData {
+    config false;
+    description "An array of ResourceSpans.
+    For data coming from a single resource this array will typically contain
+    one element. Intermediary nodes that receive data from multiple origins
+    typically batch the data before forwarding further and in that case this
+    array will contain multiple elements.";
+    list resource_spans {
+
+// I am missing the key for this list.... 
+
+      description 
+      "A collection of ScopeSpans from a Resource.";
+      container resource {
+        description "
+          The resource for the spans in this message.
+          If this field is not set then no resource info is known.";
+        uses resource-grouping;
+      }
+      list scope_spans {
+
+// I am missing the key for this list....
+
+        description "A list of ScopeSpans that originate from a resource.";
+
+        uses scope-spans-grouping;
+      }
+      leaf schema_url {
+        description "This schema_url applies to the data in the resource field. 
+        It does not apply to the data in the scope_spans field which have their 
+        own schema_url field.";
+        type string;
+      }
+    }
+  }
+}

@@ -1,0 +1,101 @@
+module: ietf-netconf-otlp-protocol
+  +--ro TracesData
+     +--ro resource_spans* []
+        +--ro resource
+        |  +--ro attributes* [key]
+        |  |  +--ro key                   string
+        |  |  +--ro (value-choice)?
+        |  |     +--:(case-string_value)
+        |  |     |  +--ro string_value?   string
+        |  |     +--:(case-bool_value)
+        |  |     |  +--ro bool_value?     boolean
+        |  |     +--:(case-int_value)
+        |  |     |  +--ro int_value?      int64
+        |  |     +--:(double_value)
+        |  |     |  +--ro double_value?   string
+        |  |     +--:(array_value)
+        |  |        +--ro value*          string
+        |  +--ro dropped_attributes_count?   uint32
+        +--ro scope_spans* []
+        |  +--ro scope
+        |  |  +--ro name?                       string
+        |  |  +--ro version?                    string
+        |  |  +--ro attributes* [key]
+        |  |  |  +--ro key                   string
+        |  |  |  +--ro (value-choice)?
+        |  |  |     +--:(case-string_value)
+        |  |  |     |  +--ro string_value?   string
+        |  |  |     +--:(case-bool_value)
+        |  |  |     |  +--ro bool_value?     boolean
+        |  |  |     +--:(case-int_value)
+        |  |  |     |  +--ro int_value?      int64
+        |  |  |     +--:(double_value)
+        |  |  |     |  +--ro double_value?   string
+        |  |  |     +--:(array_value)
+        |  |  |        +--ro value*          string
+        |  |  +--ro dropped_attributes_count?   uint32
+        |  +--ro spans* [trace_id span_id]
+        |  |  +--ro trace_id                    binary
+        |  |  +--ro span_id                     binary
+        |  |  +--ro trace_state?                string
+        |  |  +--ro parent_span_id?             binary
+        |  |  +--ro name                        string
+        |  |  +--ro kind?                       spankind-type
+        |  |  +--ro start_time_unix_nano        uint64
+        |  |  +--ro end_time_unix_nano          uint64
+        |  |  +--ro attributes* [key]
+        |  |  |  +--ro key                   string
+        |  |  |  +--ro (value-choice)?
+        |  |  |     +--:(case-string_value)
+        |  |  |     |  +--ro string_value?   string
+        |  |  |     +--:(case-bool_value)
+        |  |  |     |  +--ro bool_value?     boolean
+        |  |  |     +--:(case-int_value)
+        |  |  |     |  +--ro int_value?      int64
+        |  |  |     +--:(double_value)
+        |  |  |     |  +--ro double_value?   string
+        |  |  |     +--:(array_value)
+        |  |  |        +--ro value*          string
+        |  |  +--ro dropped_attributes_count?   uint32
+        |  |  +--ro events* [name]
+        |  |  |  +--ro time_unix_nano?             uint64
+        |  |  |  +--ro name                        string
+        |  |  |  +--ro attributes* [key]
+        |  |  |  |  +--ro key                   string
+        |  |  |  |  +--ro (value-choice)?
+        |  |  |  |     +--:(case-string_value)
+        |  |  |  |     |  +--ro string_value?   string
+        |  |  |  |     +--:(case-bool_value)
+        |  |  |  |     |  +--ro bool_value?     boolean
+        |  |  |  |     +--:(case-int_value)
+        |  |  |  |     |  +--ro int_value?      int64
+        |  |  |  |     +--:(double_value)
+        |  |  |  |     |  +--ro double_value?   string
+        |  |  |  |     +--:(array_value)
+        |  |  |  |        +--ro value*          string
+        |  |  |  +--ro dropped_attributes_count?   uint32
+        |  |  +--ro dropped_events_count?       uint32
+        |  |  +--ro links* [trace_id span_id]
+        |  |  |  +--ro trace_id                    binary
+        |  |  |  +--ro span_id                     binary
+        |  |  |  +--ro trace_state?                string
+        |  |  |  +--ro attributes* [key]
+        |  |  |  |  +--ro key                   string
+        |  |  |  |  +--ro (value-choice)?
+        |  |  |  |     +--:(case-string_value)
+        |  |  |  |     |  +--ro string_value?   string
+        |  |  |  |     +--:(case-bool_value)
+        |  |  |  |     |  +--ro bool_value?     boolean
+        |  |  |  |     +--:(case-int_value)
+        |  |  |  |     |  +--ro int_value?      int64
+        |  |  |  |     +--:(double_value)
+        |  |  |  |     |  +--ro double_value?   string
+        |  |  |  |     +--:(array_value)
+        |  |  |  |        +--ro value*          string
+        |  |  |  +--ro dropped_attributes_count?   uint32
+        |  |  +--ro dropped_links_count?        uint32
+        |  |  +--ro status
+        |  |     +--ro message?   string
+        |  |     +--ro code?      statuscode-type
+        |  +--ro schema_url?   string
+        +--ro schema_url?    string
